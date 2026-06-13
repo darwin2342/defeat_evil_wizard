@@ -11,7 +11,12 @@ class Character:
     def attack(self, opponent):
         damage = random.randint(max(1, self.attack_power - 5), self.attack_power + 5)
         opponent.health -= damage
+        
+        if opponent.health < 0:
+            opponent.health = 0
+
         print(f"{self.name} attacks {opponent.name} for {damage} damage!")
+
         if opponent.health <= 0:
             print(f"{opponent.name} has been defeated!")
 
@@ -43,17 +48,20 @@ class EvilWizard(Character):
         super().__init__(name, health=150, attack_power=15)
 
     def regenerate(self):
+        old_health = self.health
         self.health += 5
-        
+
         if self.health > self.max_health:
             self.health = self.max_health
-        print(f"{self.name} regenerates 5 health! Current health: {self.health}")
+        
+        actual_regen = self.health - old_health
+        print(f"{self.name} regenerates {actual_regen} health! Current health: {self.health}")
 
 
 # Create Archer class
 class Archer(Character):
     def __init__(self, name):
-        super().__init__(name, health=120, attack_power=10)
+        super().__init__(name, health=120, attack_power=20)
         self.evading = False
 
     def quick_shot(self, opponent):
@@ -68,13 +76,7 @@ class Archer(Character):
         self.evading = True
         print(f'{self.name} is evading the next attack!')
 
-    def take_damage(self, damage):
-        if self.evading:
-            print(f'{self.name} evades the attack!')
-            self.evading = False
-            return
-        
-        super().take_damage(damage)
+    
 
 # Create Paladin class 
 class Paladin(Character):
@@ -92,17 +94,6 @@ class Paladin(Character):
     def divine_shield(self):
         self.blocking = True
         print(f'{self.name} raises a Divine Shield! The next attack will be blocked!')
-
-    def take_damage(self, damage):
-        if self.blocking:
-            print(f'{self.name} blocks the attack with Divine Shield!')
-            self.blocking = False
-            return
-        
-        super().take_damage(damage)
-
-    
-
 
 
 def create_character():
@@ -171,8 +162,11 @@ def battle(player, wizard):
             player.heal()
         elif choice == '4':
             player.display_stats()
+            wizard.display_stats()
+            continue
         else:
             print("Invalid choice. Try again.")
+            continue
 
         if wizard.health > 0:
             wizard.regenerate()
@@ -180,6 +174,11 @@ def battle(player, wizard):
             if getattr(player, "evading", False):
                 print(f"{player.name} evaded the wizard's attack!")
                 player.evading = False
+
+            elif getattr(player, "blocking", False):
+                print(f"{player.name} blocked the wizard's attack with Divine Shield!")
+                player.blocking = False       
+
             else:
                 wizard.attack(player)
 
